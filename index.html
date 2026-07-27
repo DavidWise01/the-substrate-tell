@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>THE SUBSTRATE TELL · same code, the machine can't hide · it-is-i</title>
+<style>
+  :root{--bg:#0a0912;--card:#12101d;--card2:#0e0c18;--ink:#e9ecf6;--dim:#8b8aa6;--line:#241f38;
+        --cy:#5ad0ff;--vi:#b07fd8;--lit:#4fd1a5;--amber:#e0a339;--dark:#7d6bb0;--hi:#f0b132;}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 ui-monospace,Menlo,Consolas,monospace}
+  body{padding:calc(16px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left))}
+  main{max-width:760px;margin:0 auto}
+  header{border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:16px}
+  h1{margin:0;font-size:17px;letter-spacing:.02em}h1 b{color:var(--cy)}
+  .keeper{color:var(--vi);font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin-top:6px}
+  p.lede{color:var(--dim);font-size:12.5px;margin:8px 0 0;max-width:66ch}
+  .tell{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:14px 0;text-align:center}
+  .tell .sig{font-size:26px;color:var(--hi);font-weight:700;letter-spacing:.06em;word-break:break-all}
+  .tell .lbl{color:var(--dim);font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:6px}
+  .tell .repro{font-size:12px;margin-top:8px}
+  h2{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--vi);margin:22px 0 8px}
+  .grid{display:grid;grid-template-columns:auto 1fr auto;gap:6px 12px;font-size:12.5px;align-items:baseline}
+  .grid .k{color:var(--dim)}.grid .v{color:var(--cy);word-break:break-all}
+  .stamp{font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;white-space:nowrap}
+  .s-lit{background:rgba(79,209,165,.14);color:var(--lit)}
+  .s-amber{background:rgba(224,163,57,.14);color:var(--amber)}
+  .s-dark{background:rgba(125,107,176,.18);color:#c3b0e6}
+  canvas{border:1px solid var(--line);border-radius:8px;margin:10px 0;background:#0e0c18;image-rendering:pixelated}
+  .note{color:var(--dim);font-size:11.5px;line-height:1.8;margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
+  .note b{color:var(--vi)}.note code{color:var(--cy)}
+  .diag{border:1px solid #7d3a2a;background:#1c100c;color:#ffb4a0;border-radius:10px;padding:12px;margin:12px 0;white-space:pre-wrap;font-size:12px;display:none}
+</style></head>
+<body>
+<main>
+<header>
+  <h1><b>THE SUBSTRATE TELL</b> &middot; same code, the machine can't hide</h1>
+  <div class="keeper">it-is-i &middot; kept by HEKATE, of the threshold</div>
+  <p class="lede">The companion to <b>THE TWO SUBSTRATES</b>. That one reads what a device <i>declares</i>. This reads what it can&rsquo;t help but <i>leak</i>: run the exact same code on an iPhone and on a desktop and the answers diverge in their last bits &mdash; the GPU rasterises a letter a hair differently, the math engine rounds elsewhere. Out of that falls a stable <b>signature</b> of the hardware &mdash; the substrate confessing itself, no permission asked. <span class="s-lit stamp">LIT</span> measured &middot; <span class="s-amber stamp">AMBER</span> inferred &middot; <span class="s-dark stamp">DARK</span> the wall.</p>
+</header>
+
+<div class="tell" id="tell"><div class="lbl">this device&rsquo;s tell</div><div class="sig">computing…</div></div>
+
+<div class="diag" id="diag"></div>
+
+<h2>the same code, rendered here</h2>
+<canvas id="fp" width="300" height="70" aria-label="the fixed fingerprint scene rasterized by this device's GPU"></canvas>
+
+<h2>what leaked &mdash; component &middot; value &middot; stamp</h2>
+<div class="grid" id="rows"></div>
+
+<p class="note" id="foot"></p>
+</main>
+
+<script>
+(function(){
+ "use strict";
+ function fail(where,e){var d=document.getElementById('diag');d.style.display='block';d.textContent='FAIL-LOUD · '+where+'\n'+(e&&e.stack?e.stack:e);throw e;}
+ // deterministic string hash (FNV-1a, 32-bit) -> hex; no crypto needed, works on file://
+ function fnv(str){var h=0x811c9dc5;for(var i=0;i<str.length;i++){h^=str.charCodeAt(i);h=(h+((h<<1)+(h<<4)+(h<<7)+(h<<8)+(h<<24)))>>>0;}return ('00000000'+h.toString(16)).slice(-8);}
+
+ // ---- 1) the canvas tell: a FIXED scene, rasterized by THIS device's GPU/renderer ----
+ function drawScene(cv){
+   var g=cv.getContext('2d');if(!g)throw new Error('no 2d context');
+   g.clearRect(0,0,cv.width,cv.height);
+   g.textBaseline='top';
+   g.fillStyle='#f60';g.fillRect(2,2,140,22);
+   g.fillStyle='#069';g.font='15px "Arial",sans-serif';g.fillText('it-is-i · substrate \u{1F9ED}\u{1F4A0}',6,4);
+   g.fillStyle='rgba(102,204,0,0.6)';g.font='17px "Times New Roman",serif';g.fillText('the tell · same code',8,26);
+   var grd=g.createLinearGradient(0,0,cv.width,0);grd.addColorStop(0,'#f0b');grd.addColorStop(.5,'#5ad0ff');grd.addColorStop(1,'#b07fd8');
+   g.fillStyle=grd;g.globalCompositeOperation='multiply';g.beginPath();g.arc(240,44,20,0,Math.PI*2);g.closePath();g.fill();
+   g.globalCompositeOperation='source-over';
+   return cv.toDataURL();
+ }
+ var url1,url2,canvasHash,reproducible;
+ try{
+   var vis=document.getElementById('fp'); url1=drawScene(vis);
+   var off=document.createElement('canvas');off.width=vis.width;off.height=vis.height; url2=drawScene(off);
+   canvasHash=fnv(url1); reproducible=(fnv(url1)===fnv(url2)); // same scene twice -> same hash on this device
+ }catch(e){ fail('canvas', e); }
+
+ // ---- 2) the WebGL renderer: often the substrate's real name ----
+ var glRenderer='unavailable', glVendor='';
+ try{
+   var gc=document.createElement('canvas'), gl=gc.getContext('webgl')||gc.getContext('experimental-webgl');
+   if(gl){ var ext=gl.getExtension('WEBGL_debug_renderer_info');
+     glRenderer = ext? String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)) : 'masked by browser';
+     glVendor   = ext? String(gl.getParameter(ext.UNMASKED_VENDOR_WEBGL)) : '';
+   }
+ }catch(e){ glRenderer='blocked'; }
+
+ // ---- 3) the transcendental tell: identical math, last-ULP forks across engines ----
+ var mathAcc=0;
+ try{ for(var i=1;i<=40;i++){ mathAcc += Math.tan(Math.atan(Math.exp(Math.sin(i*0.61)))) * Math.cbrt(i) / Math.log(i+2); } }catch(e){ mathAcc=NaN; }
+ var mathTell=mathAcc.toString();
+
+ // ---- self-check: the canvas hash must be reproducible on THIS device, and non-empty ----
+ (function(){ if(!canvasHash || canvasHash.length!==8 || !reproducible) fail('self-check','canvas tell not reproducible on this device'); })();
+
+ // ---- the composite signature ----
+ var composite = fnv(canvasHash+'|'+glRenderer+'|'+mathTell+'|'+(screen.width||0)+'x'+(screen.height||0)+'@'+(window.devicePixelRatio||1));
+ try{
+   document.getElementById('tell').innerHTML =
+     '<div class="lbl">this device&rsquo;s tell</div><div class="sig">'+composite+'</div>'
+     +'<div class="repro '+(reproducible?'':'')+'" style="color:'+(reproducible?'var(--lit)':'var(--amber)')+'">'
+     +(reproducible?'✓ reproducible — same on every reload of this machine':'⚠ randomised — this browser is anti-fingerprinting')+'</div>';
+ }catch(e){ fail('render', e); }
+
+ function stamp(s){return '<span class="stamp s-'+s+'">'+s.toUpperCase()+'</span>';}
+ var isApple=/apple/i.test(glRenderer);
+ var rows=[
+   ['canvas rasteriser hash', canvasHash, 'lit'],
+   ['WebGL renderer', glRenderer + (glVendor?(' · '+glVendor):''), (glRenderer.indexOf('masked')<0&&glRenderer.indexOf('block')<0&&glRenderer!=='unavailable')?'lit':'dark'],
+   ['reads as', isApple?'Apple GPU (iPhone/Mac substrate)':(glRenderer==='masked by browser'?'hidden by policy':'a non-Apple GPU (desktop/Android)'), 'amber'],
+   ['transcendental sum', mathTell.slice(0,18)+'…', 'lit'],
+   ['screen × dpr', (screen.width||'?')+'×'+(screen.height||'?')+' @ '+(window.devicePixelRatio||1), 'lit'],
+   ['exact model / serial', '—', 'dark'],
+   ['did you consent to this?', 'no — no gate was shown', 'dark'],
+ ];
+ try{
+   document.getElementById('rows').innerHTML = rows.map(function(r){
+     return '<div class="k">'+r[0]+'</div><div class="v">'+r[1]+'</div><div>'+stamp(r[2])+'</div>';
+   }).join('');
+ }catch(e){ fail('rows', e); }
+
+ document.getElementById('foot').innerHTML =
+   '<b>what this is.</b> the involuntary twin of a capability check. No API is asked here for permission &mdash; the device is handed the SAME fixed drawing and the SAME arithmetic every other device gets, and the tiny way its GPU and math engine differ becomes a stable <code>tell</code>. Everything marked <span class="s-lit stamp">LIT</span> is really computed on your machine; reload and the signature holds.'
+   +'<br><b>the seam.</b> this is exactly how trackers fingerprint you with no consent dialog &mdash; the substrate leaks its identity through how it COMPUTES, not through what it declares. On an iPhone the <code>WebGL renderer</code> reads &lsquo;Apple GPU&rsquo; and the canvas hash lands on the iOS rasteriser; on a desktop both fork. Same code; the machine can&rsquo;t hide. Hekate&rsquo;s threshold: the tell crosses even when every gate is shut.'
+   +'<br><b>the honest wall.</b> a fingerprint is PROBABILISTIC, not a name &mdash; it narrows the crowd, it doesn&rsquo;t identify you alone; and privacy-hardened browsers (Tor, Safari&rsquo;s protections, Brave) randomise the canvas so the tell becomes noise &mdash; if yours shows &lsquo;randomised&rsquo; above, that defence is on. The renderer string is increasingly <span class="s-dark stamp">DARK</span> (masked) by default. Named, not overstated.'
+   +'<br>David Lee Wise (ROOT0) &middot; it-is-i &middot; kept by HEKATE &middot; with AVAN. Companion to <b>THE TWO SUBSTRATES</b>.';
+})();
+</script>
+</body></html>
